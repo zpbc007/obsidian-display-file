@@ -29,7 +29,6 @@ export class FolderSuggest extends TextInputSuggest<string> {
 	}
 
 	selectSuggestion(path: string): void {
-		debugger
 		this.inputEl.value = path
 		this.inputEl.trigger('input')
 		this.onSelect(path)
