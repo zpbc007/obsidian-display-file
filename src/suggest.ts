@@ -21,7 +21,7 @@ export class FileSuggest extends EditorSuggest<Suggestion> {
 
 	getSuggestions(context: EditorSuggestContext): Suggestion[] | Promise<Suggestion[]> {
 		// TODO: 根据 query 过滤
-		context.query
+		// TODO: 根据文件夹、正则过滤
 		return this.app.vault.getFiles().map<Suggestion>((item) => ({
 			path: item.path,
 			startPos: {
@@ -42,7 +42,6 @@ export class FileSuggest extends EditorSuggest<Suggestion> {
 		const line = editor.getLine(cursor.line - 1)
 		// TODO: 这里需要判断下是不是 code block
 		const matched = line.includes(PluginName)
-		debugger
 
 		if (!matched) {
 			return null
