@@ -8,6 +8,7 @@ import {
 	TFile,
 } from 'obsidian'
 import { PluginName } from './constants'
+import DisplayFilePlugin from './main'
 
 interface Suggestion {
 	path: string
@@ -15,14 +16,13 @@ interface Suggestion {
 }
 
 export class FileSuggest extends EditorSuggest<Suggestion> {
-	constructor(private readonly app: App) {
+	constructor(private readonly app: App, private readonly plugin: DisplayFilePlugin) {
 		super(app)
 	}
 
 	getSuggestions(context: EditorSuggestContext): Suggestion[] | Promise<Suggestion[]> {
 		// TODO: 根据 query 过滤
-		// TODO: 根据文件夹、正则过滤
-		return this.app.vault.getFiles().map<Suggestion>((item) => ({
+		return this.plugin.files.map<Suggestion>((item) => ({
 			path: item.path,
 			startPos: {
 				...context.start,

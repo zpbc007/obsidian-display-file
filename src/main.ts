@@ -4,10 +4,12 @@ import {
 	Plugin,
 	FileSystemAdapter,
 	MarkdownPostProcessorContext,
+	TFile,
 } from 'obsidian'
 import { PluginName } from './constants'
 import { DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab } from './setting'
 import { FileSuggest } from './suggest'
+import { dirname } from 'path'
 
 async function obsidianMarkdownRenderer(text: string, element: HTMLSpanElement, path: string) {
 	await MarkdownRenderer.renderMarkdown(text, element, path, (null as unknown) as Component)
@@ -15,9 +17,14 @@ async function obsidianMarkdownRenderer(text: string, element: HTMLSpanElement, 
 
 export default class DisplayFilePlugin extends Plugin {
 	settings: MyPluginSettings
+	files: TFile[] = []
 
 	async onload() {
 		await this.loadSettings()
+
+		// 监听文件的变化
+		this.listenFileTreeChange(this.syncFileTree)
+		this.syncFileTree()
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SampleSettingTab(this.app, this))
@@ -30,7 +37,7 @@ export default class DisplayFilePlugin extends Plugin {
 		this.registerMarkdownCodeBlockProcessor(PluginName, this.codeBlockProcessor)
 
 		// 添加文件路径自动提示
-		this.registerEditorSuggest(new FileSuggest(this.app))
+		this.registerEditorSuggest(new FileSuggest(this.app, this))
 	}
 
 	onunload() {}
@@ -41,6 +48,7 @@ export default class DisplayFilePlugin extends Plugin {
 
 	async saveSettings() {
 		await this.saveData(this.settings)
+		this.syncFileTree()
 	}
 
 	private codeBlockProcessor = async (
@@ -50,7 +58,7 @@ export default class DisplayFilePlugin extends Plugin {
 	) => {
 		const sourcePath = source.trim()
 		// 获取源文件
-		const targetFile = this.app.vault.getFiles().filter((item) => item.path === sourcePath)[0]
+		const targetFile = this.files.filter((item) => item.path === sourcePath)[0]
 
 		// 没找到
 		if (!targetFile) {
@@ -85,5 +93,37 @@ export default class DisplayFilePlugin extends Plugin {
 
 	private getFiles() {
 		return this.app.vault.getFiles()
+	}
+
+	private genVscodeLink(projectPath: string) {
+		return `vscode://file/${projectPath}`
+	}
+
+	private listenFileTreeChange = (listener: () => void) => {
+		this.app.vault.on('create', listener)
+		this.app.vault.on('delete', listener)
+		this.app.vault.on('rename', listener)
+	}
+
+	private syncFileTree = () => {
+		const { searchDir, includeFileRegex, excludeFileRegex } = this.settings
+
+		this.files = this.app.vault.getFiles().filter(({ path, name }) => {
+			// 在搜索目录内
+			const fileDir = dirname(path)
+			let result = fileDir.startsWith(searchDir)
+
+			if (result && includeFileRegex) {
+				const regex = new RegExp(includeFileRegex, 'i')
+				result = regex.test(name)
+			}
+
+			if (result && excludeFileRegex) {
+				const regex = new RegExp(excludeFileRegex, 'i')
+				result = !regex.test(name)
+			}
+
+			return result
+		})
 	}
 }

@@ -12,7 +12,7 @@ export interface MyPluginSettings {
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
-	searchDir: '/',
+	searchDir: '.',
 }
 
 export class SampleSettingTab extends PluginSettingTab {
