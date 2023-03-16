@@ -72,26 +72,29 @@ export default class DisplayFilePlugin extends Plugin {
 		}
 
 		if (fullPath) {
-			const projectEl = el.createEl('a')
-			projectEl.setText('项目')
-			projectEl.addClass('display-file-title')
-			projectEl.href = `vscode://file//Users/zhaopeng/Documents/self-code/algorithm-battle`
+			/**
+			 * TODO: 查找项目地址的方式
+			 * 	1. 向上查找目录
+			 * 	2. 用户自己设置
+			 *  3. 通过 Project Manager
+			 */
+			// const projectEl = el.createEl('a')
+			// projectEl.setText('项目')
+			// projectEl.addClass('display-file-title')
+			// projectEl.href = `vscode://file//Users/zhaopeng/Documents/self-code/algorithm-battle`
 
 			const titleEl = el.createEl('a')
 			titleEl.setText(targetFile.name)
 			titleEl.addClass('display-file-title')
-			titleEl.href = `vscode://file/${fullPath}?workspace=/Users/zhaopeng/Documents/self-code/algorithm-battle`
+			titleEl.href = `vscode://file/${fullPath}`
 		}
 
+		// TODO: 支持更多的文件类型
 		await obsidianMarkdownRenderer(
 			'```typescript\n' + fileContent + '\n```',
 			el.createDiv(),
 			ctx.sourcePath,
 		)
-	}
-
-	private genVscodeLink(projectPath: string) {
-		return `vscode://file/${projectPath}`
 	}
 
 	private listenFileTreeChange = (listener: () => void) => {
@@ -103,7 +106,7 @@ export default class DisplayFilePlugin extends Plugin {
 	private syncFileTree = () => {
 		const { searchDir, includeFileRegex, excludeFileRegex } = this.settings
 
-		this.files = this.app.vault.getFiles().filter(({ path, name, parent }) => {
+		this.files = this.app.vault.getFiles().filter(({ name, parent }) => {
 			// 在搜索目录内
 			const fileDir = parent.path
 			let result = fileDir.startsWith(searchDir)
