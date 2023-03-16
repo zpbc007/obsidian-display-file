@@ -21,14 +21,15 @@ export class FileSuggest extends EditorSuggest<Suggestion> {
 	}
 
 	getSuggestions(context: EditorSuggestContext): Suggestion[] | Promise<Suggestion[]> {
-		// TODO: 根据 query 过滤
-		return this.plugin.files.map<Suggestion>((item) => ({
-			path: item.path,
-			startPos: {
-				...context.start,
-				ch: 0,
-			},
-		}))
+		return this.plugin.files
+			.filter((item) => item.path.toLowerCase().includes(context.query))
+			.map<Suggestion>((item) => ({
+				path: item.path,
+				startPos: {
+					...context.start,
+					ch: 0,
+				},
+			}))
 	}
 
 	onTrigger(
@@ -40,14 +41,11 @@ export class FileSuggest extends EditorSuggest<Suggestion> {
 			return null
 		}
 		const line = editor.getLine(cursor.line - 1)
-		// TODO: 这里需要判断下是不是 code block
-		const matched = line.includes(PluginName)
-
+		const matched = line.includes('```' + PluginName)
+		debugger
 		if (!matched) {
 			return null
 		}
-
-		// TODO: 解析出 query
 
 		return {
 			start: {
@@ -55,7 +53,7 @@ export class FileSuggest extends EditorSuggest<Suggestion> {
 				ch: 0,
 			},
 			end: cursor,
-			query: 'xxx',
+			query: editor.getLine(cursor.line).toLowerCase(),
 		}
 	}
 
