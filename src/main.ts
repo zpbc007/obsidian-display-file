@@ -9,7 +9,6 @@ import {
 import { PluginName } from './constants'
 import { DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab } from './setting'
 import { FileSuggest } from './suggest'
-import { dirname } from 'path'
 
 async function obsidianMarkdownRenderer(text: string, element: HTMLSpanElement, path: string) {
 	await MarkdownRenderer.renderMarkdown(text, element, path, (null as unknown) as Component)
@@ -91,26 +90,22 @@ export default class DisplayFilePlugin extends Plugin {
 		)
 	}
 
-	private getFiles() {
-		return this.app.vault.getFiles()
-	}
-
 	private genVscodeLink(projectPath: string) {
 		return `vscode://file/${projectPath}`
 	}
 
 	private listenFileTreeChange = (listener: () => void) => {
-		this.app.vault.on('create', listener)
-		this.app.vault.on('delete', listener)
-		this.app.vault.on('rename', listener)
+		;(['create', 'delete', 'rename'] as const).forEach((eventname) =>
+			this.registerEvent(this.app.vault.on(eventname as any, listener)),
+		)
 	}
 
 	private syncFileTree = () => {
 		const { searchDir, includeFileRegex, excludeFileRegex } = this.settings
 
-		this.files = this.app.vault.getFiles().filter(({ path, name }) => {
+		this.files = this.app.vault.getFiles().filter(({ path, name, parent }) => {
 			// 在搜索目录内
-			const fileDir = dirname(path)
+			const fileDir = parent.path
 			let result = fileDir.startsWith(searchDir)
 
 			if (result && includeFileRegex) {

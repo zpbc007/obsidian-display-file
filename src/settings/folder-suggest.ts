@@ -1,6 +1,5 @@
 import { App } from 'obsidian'
 import { TextInputSuggest } from './text-input-suggest'
-import { dirname } from 'path'
 
 export class FolderSuggest extends TextInputSuggest<string> {
 	constructor(
@@ -16,7 +15,7 @@ export class FolderSuggest extends TextInputSuggest<string> {
 
 		return Array.from(
 			this.app.vault.getFiles().reduce<Set<string>>((dirSet, file) => {
-				const fileDir = dirname(file.path)
+				const fileDir = file.parent.path
 				dirSet.add(fileDir)
 
 				return dirSet
