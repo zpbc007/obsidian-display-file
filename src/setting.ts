@@ -1,6 +1,5 @@
 import { App, PluginSettingTab, Setting } from 'obsidian'
 import DisplayFilePlugin from './main'
-import { FolderSuggest } from './settings/folder-suggest'
 
 export interface MyPluginSettings {
 	// 查询的子目录
@@ -9,6 +8,10 @@ export interface MyPluginSettings {
 	includeFileRegex?: string
 	// 需要被排除的文件正则
 	excludeFileRegex?: string
+	// 有任何的修改时，执行的脚本
+	onModifyBash?: string
+	// path 有问题，用户手动输入
+	shellPath?: string
 }
 
 export const DEFAULT_SETTINGS: MyPluginSettings = {
@@ -52,6 +55,22 @@ export class SampleSettingTab extends PluginSettingTab {
 			placeholder: 'Enter the regex',
 			valueGetter: () => this.plugin.settings.excludeFileRegex || '',
 			onChange: (value) => (this.plugin.settings.excludeFileRegex = value),
+		})
+
+		this.addTextField({
+			name: 'Bash file',
+			desc: 'This file will be executed when any change in the vault',
+			placeholder: 'Enter the bash file path',
+			valueGetter: () => this.plugin.settings.onModifyBash || '',
+			onChange: (value) => (this.plugin.settings.onModifyBash = value),
+		})
+
+		this.addTextField({
+			name: 'Bash file path',
+			desc: 'Shell path to execute bash',
+			placeholder: 'Enter the bash path',
+			valueGetter: () => this.plugin.settings.shellPath || '',
+			onChange: (value) => (this.plugin.settings.shellPath = value),
 		})
 
 		// new Setting(containerEl)

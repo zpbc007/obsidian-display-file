@@ -5,10 +5,13 @@ import {
 	FileSystemAdapter,
 	MarkdownPostProcessorContext,
 	TFile,
+	Notice,
 } from 'obsidian'
 import { PluginName } from './constants'
 import { DEFAULT_SETTINGS, MyPluginSettings, SampleSettingTab } from './setting'
 import { FileSuggest } from './suggest'
+import debounce from 'lodash.debounce'
+import { execSync } from 'child_process'
 
 async function obsidianMarkdownRenderer(text: string, element: HTMLSpanElement, path: string) {
 	await MarkdownRenderer.renderMarkdown(text, element, path, (null as unknown) as Component)
@@ -21,9 +24,12 @@ export default class DisplayFilePlugin extends Plugin {
 	async onload() {
 		await this.loadSettings()
 
-		// 监听文件的变化
+		// 监听文件i树的变化
 		this.listenFileTreeChange(this.syncFileTree)
+		// 主动处理一次
 		this.syncFileTree()
+
+		this.listenVaultModify(debounce(this.execModifyHook, 1000))
 
 		// This adds a settings tab so the user can configure various aspects of the plugin
 		this.addSettingTab(new SampleSettingTab(this.app, this))
@@ -97,10 +103,21 @@ export default class DisplayFilePlugin extends Plugin {
 		)
 	}
 
+	/**
+	 * modify: 修改文件内容触发
+	 * create\delete\rename: 修改文件本身时触发
+	 */
 	private listenFileTreeChange = (listener: () => void) => {
 		;(['create', 'delete', 'rename'] as const).forEach((eventname) =>
 			this.registerEvent(this.app.vault.on(eventname as any, listener)),
 		)
+	}
+
+	private listenVaultModify = (listener: () => void) => {
+		// 监听文件树的改动
+		this.listenFileTreeChange(listener)
+		// 监听文件的改动
+		this.registerEvent(this.app.vault.on('modify', listener))
 	}
 
 	private syncFileTree = () => {
@@ -123,5 +140,25 @@ export default class DisplayFilePlugin extends Plugin {
 
 			return result
 		})
+	}
+
+	// 有任何修改执行用户的 bash 文件，可以用于文件同步
+	private execModifyHook = () => {
+		if (!this.settings.onModifyBash) {
+			return
+		}
+
+		const env = Object.create(process.env)
+		if (this.settings.shellPath) {
+			env.PATH = this.settings.shellPath + env.PATH
+		}
+		try {
+			execSync(`bash ${this.settings.onModifyBash}`, {
+				env,
+			})
+		} catch (e) {
+			console.error(e)
+			new Notice(`[Display file] exec bash file error: ${e.toString()}`)
+		}
 	}
 }

@@ -42,7 +42,6 @@ export class FileSuggest extends EditorSuggest<Suggestion> {
 		}
 		const line = editor.getLine(cursor.line - 1)
 		const matched = line.includes('```' + PluginName)
-		debugger
 		if (!matched) {
 			return null
 		}
