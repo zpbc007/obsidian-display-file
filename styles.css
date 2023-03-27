@@ -2,3 +2,7 @@
     padding: 4px;
     color: var(--text-faint);
 }
+
+.block-language-display-file pre {
+    padding-top: 20px;
+}
